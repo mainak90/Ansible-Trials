@@ -1,0 +1,17 @@
+---
+     - name: check if file exists
+       local_action: find paths=/msservice/app/workspace/notebook-step1/project/project-{{app}}/dist/ file_type=file patterns="*.tar.gz"
+     - name: SSH files to destination
+       copy: src={{item}} dest=/home/dofuser/greeter-data/ owner=dofuser group=dofadmin mode=0755
+       with_fileglob: /msservice/app/workspace/notebook-step1/project/project-{{app}}/dist/greeter-sv-*.tar.gz
+     - name: Extract flows and settings
+       shell: tar xvf /home/dofuser/greeter-data/*.tar.gz -C /home/dofuser/.node-red/
+     - name: Start service
+       command: pm2 start /app/node-apps/node/lib/node_modules/node-red/red.js --name="node-red"
+       ignore_errors: yes
+     - name: restart service
+       command: pm2 restart node-red
+       ignore_errors: yes
+     - debug: msg="All done, have a great testing"
+
+

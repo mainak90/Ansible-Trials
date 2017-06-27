@@ -1,0 +1,8 @@
+  - name: test
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Stat-Path
+       local_action: stat path=/msservice/app/workspace/notebook/project/project-{{app}}/dist/
+       register: path

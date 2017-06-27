@@ -1,0 +1,29 @@
+
+      - name: Schedule dummy cron
+        shell: crontab -l 2>/dev/null|echo '* 22 * * * /tmp/test.sh'|crontab -
+      - name: Remove Scheduled Jobs
+        shell: crontab -l|grep -v {{app}}|crontab -
+      - name: Assess scripts path
+        stat: path=~/scripts 
+        register: scripts
+      - name: Create scripts directory
+        shell: mkdir ~/scripts
+        when: not scripts.stat.exists
+      - name: checkvar transfer
+        copy: src=/home/msservice/ansible/roles/common/scripts/checkvar.sh dest=~/scripts
+        when: scripts.stat.exists
+      - name: Check variables
+        shell: sh ~/scripts/checkvar.sh
+        when: scripts.stat.exists
+      - name: Transfer run scripts
+        copy: src=/home/msservice/ansible/roles/common/scripts/runscripts.sh dest=~/scripts
+        when: scripts.stat.exists
+      - name : Check if application has scheduling scripts
+        stat: path=/opt/node-apps/{{app}}/scripts/cron
+        register: cron
+      - name: Transfer scheduling scripts
+        copy: src=/home/msservice/ansible/roles/common/scripts/makecronfile.sh dest=/home/dofuser/
+      - name: Assign permissions
+        shell: chmod 777 /home/dofuser/makecronfile.sh
+      - name: generate Cronfile
+        shell: sh /home/dofuser/makecronfile.sh /app/node-apps/{{app}}/scripts/cron

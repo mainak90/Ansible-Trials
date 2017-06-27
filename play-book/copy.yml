@@ -1,0 +1,20 @@
+---
+     - name: Finding Deliverable path
+       local_action: stat path=/msservice/app/workspace/{{app}}/project/dist/
+       register: files
+     - name: Checking Deployment Folder....
+       stat: path=/app/node-apps/{{app}}/
+       register: dircheck
+       ignore_errors: yes
+     - name: Preparing deployment folder
+       shell: rm -rf /app/node-apps/{{app}}/
+     - name: Create appdir
+       shell: mkdir /app/node-apps/{{app}}/
+       ignore_errors: yes
+     - name: ssh file to destination
+       copy: src=/msservice/app/workspace/{{app}}/project/dist/{{app}}.tar.gz dest=/tmp
+     - name: Extract files to destination
+       shell: cd /app/node-apps/{{app}}/ && tar -xvf /tmp/{{app}}.tar.gz -C /app/node-apps/{{app}}/
+     - name: Clearing temporary local files
+       local_action: shell rm -rf /tmp/{{app}}.tar.gz
+     - debug: msg="All done!!! Thank you :)"

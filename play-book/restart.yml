@@ -1,0 +1,26 @@
+---
+  - name: restart
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+        
+    tasks: 
+      - name: Kill PM2 process
+        command: pm2 stop {{app}}
+        ignore_errors: yes
+        tags: 
+            - stop
+      - name: start pm2 process
+        command: pm2 start /app/node-apps/{{app}}/app.js --name="{{app}}"
+        ignore_errors: yes
+        tags:
+           - start
+      - name: Process status
+        command: pm2 show {{app}}
+        register: res2
+        tags: 
+           - status
+      - debug: var=res2.stdout_lines
+      - name: PM2 restart 
+        command: pm2 restart {{app}}
+        tags:
+           - restart

@@ -1,0 +1,8 @@
+---
+
+ -  name: notebook.yml
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    roles: 
+         - notebook

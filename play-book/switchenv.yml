@@ -1,0 +1,13 @@
+  - name: fileupload
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+      - name: Set node env PROD and switch 
+        shell: export NODE_ENV=prod && pm2 stop node-webserver && pm2 delete node-webserver && pm2 start /app/node-apps/node-webserver/app.js --name="node-webserver"
+        when: switchenv == "prod"
+      - name: Set node env DR
+        shell: export NODE_ENV=dr && pm2 stop node-webserver && pm2 delete node-webserver && pm2 start /app/node-apps/node-webserver/app.js --name="node-webserver"
+        when: switchenv == "dr"
+
+

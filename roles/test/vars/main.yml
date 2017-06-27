@@ -1,0 +1,6 @@
+## Variables related to node file install
+
+local_path : /msservice/app
+remote_path : /opt/node-apps
+script_path : /home/msservice/ansible/roles/common/scripts
+node_path : /opt/node-apps/node-v6.6.0-linux-x64/bin

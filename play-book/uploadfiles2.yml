@@ -1,0 +1,65 @@
+  - name: fileupload
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Stat if file path exists
+       local_action: stat path=/home/msservice/continuous-delivery
+       register: repo
+     - name: Delete pre-existing repo
+       local_action: shell rm -rf /home/msservice/continuous-delivery
+       when: repo.stat.exists
+     - name: Check if pre-existing repo is deleted
+       local_action: stat path=/home/msservice/continuous-delivery
+       register: repo2
+     - name: Clone repo
+       local_action: shell cd /home/msservice && git clone git@el2604.bc:DOF-Official/continuous-delivery.git
+       when: not repo2.stat.exists
+     - name: Check if the core-team files exist
+       stat: path=/home/msservice/continuous-delivery/data/in/CSA
+       register: CSA
+     - name: Adapt files with timesstamp:CSA
+       local_action: shell sh /home/msservice/ansible/scripts/managecustodyfiles.sh /home/msservice/continuous-delivery/data/in/CSA/ 
+     - name: Check if the core-team files exist
+       stat: path=/home/msservice/continuous-delivery/data/in/MO
+       register: MO
+     - name: Adapt files with timestamp MO
+       local_action: shell sh /home/msservice/ansible/scripts/managecustodyfiles.sh /home/msservice/continuous-delivery/data/in/MO/
+     - name: Archive CSA and MO data
+       local_action: shell sh /home/msservice/ansible/scripts/zipdata.sh
+     - name: Pull AuthorizationProfile.core-team.csv
+       local_action: shell curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/AuthorisationProfile.core-team.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/AuthorisationProfile.core-team.`date +%I%M%S`.csv
+     - name: Push AuthorizationProfile.core-team.csv
+       copy: src={{item}}  dest=/app/node-apps/in/CSA/
+       with_fileglob: /tmp/AuthorisationProfile.core-team.*
+     - name: Pull AuthorisationProfile.id1id6.csv
+       local_action: shell curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/AuthorisationProfile.id1id6.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/AuthorisationProfile.id1id6.`date +%I%M%S`.csv
+     - name: Push AuthorisationProfile.id1id6.csv
+       copy: src={{item}}  dest=/app/node-apps/in/CSA/
+       with_fileglob: /tmp/AuthorisationProfile.id1id6.*
+     - pause:
+        seconds: 10
+     - name: Check if auth-profiles core team csv is processed
+       local_action: find paths=/app/node-apps/out/processed/ file_type=file patterns="AuthorisationProfile.core-team.`date +%I%M`*"
+       register: core
+     - pause: 
+        seconds: 10
+       when: core|failed
+     - name: Check if auth-profiles csv is processed
+       local_action: find paths=/app/node-apps/out/processed/ file_type=file patterns="AuthorisationProfile.id1id6.`date +%I%M`*"
+       register: core2
+     - pause:
+        seconds: 10
+       when: core2|failed
+     - name: SSH CSA files to destination
+       copy: src=/tmp/CSA.tar.gz dest=/tmp
+     - name: SSH MO files to destination
+       copy: src=/tmp/MO.tar.gz dest=/tmp
+     - name: Copy CSA files in destination
+       shell: tar xvf /tmp/CSA.tar.gz -C /app/node-apps/in/CSA/ 
+     - name: Copy MO files in destination
+       shell: tar xvf /tmp/MO.tar.gz -C /app/node-apps/in/MO/
+     - name: remove temp files
+       shell: rm -rf /tmp/MO.tar.gz && rm -rf /tmp/CSA.tar.gz
+     - name: Remove local files
+       local_action: shell rm -rf /home/msservice/continuous-delivery

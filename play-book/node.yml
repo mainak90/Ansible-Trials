@@ -1,0 +1,68 @@
+
+      - include: envtasks.yml env={{env}} app={{app}}
+      - name: Find executables
+        local_action: find paths=/msservice/app/workspace/{{app}}/project/dist/ file_type=file patterns="*.tar.gz"
+      - name: Stat the executable
+        local_action: stat path=/msservice/app/workspace/{{app}}/project/dist/
+        register: files
+      - name: Check if deployment diretories exist in remote host
+        stat: path=/app/node-apps/{{app}}
+        register: path
+      - name: Preparing deployment folder
+        shell: rm -rf /app/node-apps/{{app}}
+        when: path.stat.exists
+      - name: SSH files to DEST
+        copy: src={{item}} dest=/tmp owner=dofuser group=dofadmin mode=0755
+        with_fileglob: /msservice/app/workspace/{{app}}/project/dist/{{app}}-*.tar.gz
+      - name: Check if deployment placeholder is ready
+        stat: path=/app/node-apps/{{app}}
+        register: path2
+      - name: Creating app dir
+        shell: mkdir /app/node-apps/{{app}}
+        when: not path2.stat.exists
+      - name: Unarchive files
+        unarchive: src={{item}} dest=/app/node-apps/{{app}}/
+        with_fileglob: /msservice/app/workspace/{{app}}/project/dist/{{app}}-*.tar.gz
+      - name: Generate Logs folder
+        shell: mkdir /app/node-apps/{{app}}/logs
+      - name: Check if script executable exists
+        stat: path=/app/node-apps/{{app}}/scripts/create-all.sh
+        register: scripts
+      - debug: msg="No execution scripts found, no scripts will be triggered"
+        when: not scripts.stat.exists
+      - name: Check if JSON data needs to be loaded
+        stat: path=/app/node-apps/{{app}}/scripts/data/
+        register: json
+      - name: Run remote scripts
+        shell: chmod 755 -R /app/node-apps/{{app}}/scripts/ &&  sh /home/dofuser/scripts/runscripts.sh {{env}} {{app}}
+        when: scripts.stat.exists
+      - name: Check placholder json exists
+        local_action: stat path=/msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-proxy.json
+        register: proxyplaceholder 
+      - name: adapt placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/common/scripts/proxyplaceholders.py {{env}} /msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-proxy.json
+        when: proxyplaceholder.stat.exists
+      - name: Check proxy placholder json exists
+        local_action: stat path=/msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-sync-gw-db.json
+        register: placeholder
+      - name: adapt proxy placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/common/scripts/placeholders.py {{env}} /msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-sync-gw-db.json
+        when: placeholder.stat.exists
+      - name: Archive couchbase json documents
+        local_action: shell sh ~/ansible/roles/common/scripts/time-machine-zipjson.sh {{app}}
+      - name: Load json documents in Couchbase
+        local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/couchdocs.yml --extra-vars="bucket=config  env={{env}} app={{app}}"
+        when: json.stat.exists
+      - name: Kill PM2 process
+        command: pm2 stop {{app}}
+        ignore_errors: yes
+      - name: start pm2 process
+        command: pm2 start /app/node-apps/{{app}}/app.js --name="{{app}}"
+      - name: Check cron files
+        stat: path=/app/node-apps/{{app}}/scripts/cron
+        register: cron
+      - name: Assign script permissions
+        shell: cd /app/node-apps/{{app}}/scripts/ && chmod 755 *.sh && cd /app/node-apps/{{app}}/scripts/cron/ && chmod 755 *.sh
+        when: scripts.stat.exists and cron.stat.exists
+      - name: Schedule Jobs
+        shell: crontab -l 2>/dev/null|cat - /tmp/filelist|crontab -

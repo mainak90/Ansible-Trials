@@ -1,0 +1,18 @@
+  - name: service-virtualization
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Checking node-red flows
+       local_action: stat path=/msservice/app/workspace/continuous-delivery-greeter/project/node-red
+       register: nodered
+     - name: Package flows and settings
+       local_action: shell cd /msservice/app/workspace/continuous-delivery-greeter/project/node-red && tar -czvf /tmp/node-red.tar.gz *
+       when: nodered.stat.exists
+     - name: Upload flows and settings
+       copy: src=/tmp/node-red.tar.gz dest=/tmp
+       when: nodered.stat.exists
+     - name: Extract flows and settings
+       shell: tar xvf /tmp/node-red.tar.gz -C /home/dofuser/.node-red
+       when: nodered.stat.exists
+     - debug: msg="All done, have a great testing"

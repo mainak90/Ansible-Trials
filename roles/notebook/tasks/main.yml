@@ -1,0 +1,69 @@
+---
+      - name: Run predeploy activities
+        local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/envtasks.yml --extra-vars="env={{env}} app={{app}}"
+      - name: Find executables
+        local_action: find paths=/msservice/app/workspace/notebook/project/project-{{app}}/dist/ file_type=file patterns="*.tar.gz"
+      - name: Stat the executable
+        local_action: stat path=/msservice/app/workspace/notebook/project/project-{{app}}/dist/
+        register: files
+      - name: Check if deployment diretories exist in remote host
+        stat: path={{remote_path}}/{{app}}
+        register: path
+      - name: Preparing deployment folder
+        shell: rm -rf {{remote_path}}/{{app}}
+        when: path.stat.exists
+      - name: SSH files to DEST
+        copy: src={{item}} dest=/tmp owner=dofuser group=dofadmin mode=0755
+        with_fileglob: /msservice/app/workspace/notebook/project/project-{{app}}/dist/{{app}}-*.tar.gz
+      - name: Check if deployment placeholder is ready
+        stat: path={{remote_path}}/{{app}}
+        register: path2
+      - name: Creating app dir
+        shell: mkdir {{remote_path}}/{{app}}
+        when: not path2.stat.exists
+      - name: Unarchive files
+        unarchive: src={{item}} dest={{remote_path}}/{{app}}/
+        with_fileglob: /msservice/app/workspace/notebook/project/project-{{app}}/dist/{{app}}-*.tar.gz
+      - name: Generate Logs folder
+        shell: mkdir {{remote_path}}/{{app}}/logs
+      - name: Check if script executable exists
+        stat: path={{remote_path}}/{{app}}/scripts/create-all.sh
+        register: scripts
+      - debug: msg="No execution scripts found, no scripts will be triggered"
+        when: not scripts.stat.exists
+      - name: Check if JSON data needs to be loaded
+        stat: path={{remote_path}}/{{app}}/scripts/data/
+        register: json
+      - name: Run remote scripts
+        shell: chmod 755 -R {{remote_path}}/{{app}}/scripts/ &&  sh /home/dofuser/scripts/runscripts.sh {{env}} {{app}}
+        when: scripts.stat.exists
+      - name: Check placholder json exists
+        local_action: stat path= /msservice/app/workspace/notebook/project/project-{{app}}/scripts/data/{{app}}-proxy.json
+        register: proxyplaceholder 
+      - name: adapt placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/notebook/scripts/proxyplaceholders.py {{env}} /msservice/app/workspace/notebook/project/project-{{app}}/scripts/data/{{app}}-proxy.json
+        when: proxyplaceholder.stat.exists
+      - name: Check proxy placholder json exists
+        local_action: stat path=/msservice/app/workspace/notebook/project/project-{{app}}/scripts/data/{{app}}-sync-gw-db.json
+        register: placeholder
+      - name: adapt proxy placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/notebook/scripts/placeholders.py {{env}} /msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-sync-gw-db.json
+        when: placeholder.stat.exists
+      - name: Archive couchbase json documents
+        local_action: shell sh ~/ansible/roles/notebook/scripts/zipjson.sh {{app}}
+      - name: Load json documents in Couchbase
+        local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/couchdocs.yml --extra-vars="bucket=config  env={{env}} app={{app}}"
+        when: json.stat.exists
+      - name: Kill PM2 process
+        command: pm2 stop {{app}}
+        ignore_errors: yes
+      - name: start pm2 process
+        command: pm2 start {{remote_path}}/{{app}}/app.js --name="{{app}}"
+      - name: Check cron files
+        stat: path=/app/node-apps/{{app}}/scripts/cron
+        register: cron
+      - name: Assign script permissions
+        shell: cd /app/node-apps/{{app}}/scripts/ && chmod 755 *.sh && cd /app/node-apps/{{app}}/scripts/cron/ && chmod 755 *.sh
+        when: scripts.stat.exists and cron.stat.exists
+      - name: Schedule Jobs
+        shell: crontab -l 2>/dev/null|cat - /tmp/filelist|crontab -

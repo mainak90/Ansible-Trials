@@ -1,0 +1,16 @@
+  - name: clean-all
+    hosts: '{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Stop Sync-Gateway
+       local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/sgwconfig.yml --tags 'action'  --extra-vars="action='stop' env={{env}}"
+     - name: Unschedule Jobs
+       shell: crontab -l 2>/dev/null|grep -v node-apps|crontab -
+     - name: Stop PM2 instances
+       shell: pm2 kill
+     - name: Flush buckets in Couchbase
+       local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/cbflush.yml --extra-vars="bucket='config' env={{env}}"
+       ignore_errors: yes
+#     - name: Stop Sync-Gateway
+#       local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/sgwconfig.yml --tags 'stop' --extra-vars="app='sg' env={{env}}"

@@ -1,0 +1,146 @@
+{
+  "_sync": {
+    "rev": "2-9f62dc02ee508e0fea3b03d7087ace38",
+    "sequence": 553,
+    "recent_sequences": [
+      552,
+      553
+    ],
+    "history": {
+      "revs": [
+        "1-cc6916bf01f911e0abc1135f3e45a947",
+        "2-9f62dc02ee508e0fea3b03d7087ace38"
+      ],
+      "parents": [
+        -1,
+        0
+      ],
+      "channels": [
+        null,
+        [
+          "greeter_v01_ch",
+          "sas_v01_ch",
+          "shop_v01_ch"
+        ]
+      ]
+    },
+    "channels": {
+      "greeter_v01_ch": null,
+      "sas_v01_ch": null,
+      "shop_v01_ch": null
+    },
+    "time_saved": "2017-06-09T14:44:29.199787473+02:00"
+  },
+  "assignee": "",
+  "author": "ID834703",
+  "channels": [
+    "greeter_v01_ch",
+    "sas_v01_ch",
+    "shop_v01_ch"
+  ],
+  "currentStatus": "waiting",
+  "delegationUnit": "v01",
+  "document-type": "case",
+  "hash": "10a23fb721cc9030213d7986ba3a0880528ad54d",
+  "history": [
+    {
+      "comment": "ID834703 has created this case",
+      "nextStatus": "waiting",
+      "timestamp": 1497012269196,
+      "transition": "new-case"
+    }
+  ],
+  "person": {
+    "competitor": {
+      "greeter": "unknown",
+      "selectedProducts": []
+    },
+    "description": {
+      "age": "young",
+      "comment": "Automated Tests",
+      "hairColor": "black",
+      "isBald": false,
+      "physical": [
+        {
+          "icon": "glasses",
+          "isEnabled": true
+        },
+        {
+          "icon": "medkit",
+          "isEnabled": false
+        },
+        {
+          "icon": "briefcase",
+          "isEnabled": false
+        },
+        {
+          "icon": "shirt",
+          "isEnabled": false
+        },
+        {
+          "icon": "bowtie",
+          "isEnabled": false
+        },
+        {
+          "icon": "woman",
+          "isEnabled": false
+        },
+        {
+          "icon": "paw",
+          "isEnabled": false
+        }
+      ],
+      "shirtColor": "blue",
+      "withBeard": false,
+      "withHair": "short"
+    },
+    "firstName": "SurnameTestgrgwm",
+    "gender": "female",
+    "greeterSpeech": [
+      {
+        "isEnabled": false,
+        "name": "Demo",
+        "translate_key": "DEMO"
+      },
+      {
+        "isEnabled": false,
+        "name": "JO",
+        "translate_key": "JO"
+      },
+      {
+        "isEnabled": true,
+        "name": "Cellebrite",
+        "translate_key": "CELLEBRITE"
+      },
+      {
+        "isEnabled": false,
+        "name": "My Proximus",
+        "translate_key": "MY_PROXIMUS"
+      }
+    ],
+    "language": "en",
+    "lastName": "LastnameTestQAkhF",
+    "speech": "Automated Tests",
+    "telephone": "0412345678"
+  },
+  "rov": [
+    {
+      "comment": "New Sales customer",
+      "form": "comments",
+      "hideCase": false,
+      "isEnabled": true,
+      "isMinimumSubCat": true,
+      "subcategories": [
+        {
+          "hideCase": false,
+          "icon": "Telephony",
+          "isEnabled": true,
+          "type": "fixed_line"
+        }
+      ],
+      "title": "New sales",
+      "type": "sales"
+    }
+  ],
+  "segment": "res"
+}

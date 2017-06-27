@@ -1,0 +1,69 @@
+---
+
+      - name: Remove Scheduled Jobs
+        shell: crontab -l|grep -v {{app}}|crontab -
+        ignore_errors: yes
+      - name: Find executables
+        local_action: find paths=/msservice/app/workspace/{{app}}/project/dist/ file_type=file patterns="*.tar.gz" 
+        register: files
+      - name: checkvar transfer
+        copy: src={{script_path}}/checkvar.sh dest=~/scripts
+      - name: Transfer scheduling scripts
+        copy: src={{script_path}}/makecronfile.sh dest=/tmp
+      - name: Assign permissions
+        shell: chmod 777 /tmp/makecronfile.sh 
+      - name: source variables
+        shell: source ~/scripts/checkvar.sh
+      - name: output env var
+        shell: echo $COUCHBASE_CONFIG_BUCKET
+      - name: Preparing deployment folder
+        shell: rm -rf {{remote_path}}/{{app}}
+        ignore_errors: yes
+      - name: SSH files to DEST
+        copy: src={{item}} dest=/tmp owner=cbops group=cbusers mode=0755
+        with_fileglob: /msservice/app/workspace/{{app}}/project/dist/{{app}}-*.tar.gz
+      - name: Creating app dir
+        shell: mkdir {{remote_path}}/{{app}}/
+      - name: extracting archive
+        shell: tar xvf /tmp/{{app}}-V*.tar.gz -C {{remote_path}}/{{app}}/
+      - name: Generate Logs folder
+        shell: mkdir {{remote_path}}/{{app}}/logs
+      - name: Check if script executable exists
+        stat: path={{remote_path}}/{{app}}/scripts
+        register: scripts
+        ignore_errors: yes
+      - name: Check if JSON data needs to be loaded
+        stat: path={{remote_path}}/{{app}}/scripts/data
+        register: json
+        ignore_errors: yes
+      - debug: msg="No execution script exists skipping to next step"
+        when: not scripts.stat.exists
+      - name: Run remote scripts
+        shell: chmod 755 -R {{remote_path}}/{{app}}/scripts/ &&  sh {{remote_path}}/{{app}}/scripts/create-all.sh {{syncdb}}
+        ignore_errors: yes
+        when: scripts.stat.exists
+      - name: adapt proxy  placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/common/scripts/proxyplaceholders.py {{env}} /msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-sync-gw-db.json
+        ignore_errors: yes
+      - name: adapt placeholders w.r.t environment
+        local_action: command python /home/msservice/ansible/roles/common/scripts/placeholders.py {{env}} /msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-proxy.json  
+        ignore_errors: yes
+      - name: Archive couchbase json documents
+        local_action: shell sh ~/ansible/roles/common/scripts/zipjson.sh {{app}}
+      - name: Load json documents in Couchbase
+        local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/couchdocs-lab.yml --extra-vars="bucket=config  env={{env}} app={{app}}"
+        when: json.stat.exists
+        ignore_errors: yes
+      - name: start pm2 process
+        command: pm2 restart {{remote_path}}/{{app}}/app.js --name="{{app}}"
+      - name: generate Cronfile
+        shell: sh /tmp/makecronfile.sh /opt/node-apps/{{app}}/scripts/cron
+        ignore_errors: yes
+      - name: Assign script permissions
+        shell: cd /opt/node-apps/{{app}}/scripts/ && chmod 755 *.sh && cd /opt/node-apps/{{app}}/scripts/cron/ && chmod 755 *.sh
+        ignore_errors: yes
+      - name: Schedule Jobs
+        shell: crontab -l 2>/dev/null|cat - /tmp/filelist|crontab -
+      - name: remove filelist
+        shell: rm -rf /tmp/filelist /tmp/makecronfile.sh /tmp/filelist
+        ignore_errors: yes

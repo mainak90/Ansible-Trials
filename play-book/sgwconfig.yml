@@ -1,0 +1,41 @@
+  - name: sgwconfig
+    hosts: '{{action}}-{{env}}'
+    remote_user: sync_gateway
+
+    tasks:
+     - name:  Checking setup scripts
+       local_action: stat path=/home/msservice/ansible/scripts/sgwplaceholders.py
+       register: files
+       tags:
+          - checkSetupScripts
+     - name: Check the delivery files
+       fail: msg="scripts doesn't exist"
+       when: not files.stat.exists
+       tags:
+          - checkDeliveryFiles
+     - name: Cloning env json from GitLab
+       local_action: shell cd /tmp/ && curl -X GET http://el2604.bc:8585/s1m0ne/sync-gw/raw/master/sync_gateway.json?private_token=U1j6Zs_nYWh8a6P9xmpx > sync_gateway.json
+       tags:
+          - GitClone
+     - name: Modify JSON placeholders
+       local_action: shell python /home/msservice/ansible/scripts/sgwplaceholders.py {{env}} /tmp/sync_gateway.json
+       tags:
+          - adaptPlaceholders
+     - name: Uploading json to sync_gateway server
+       copy: src=/tmp/sync_gateway.json dest=/opt/sync-gateway/
+       tags:
+          - uploadJson
+#     - name: Stop Running Service
+#       shell: sudo systemctl stop sync_gateway
+#       ignore_errors: yes
+#       tags: 
+#          - stop
+#     - name: Start Sync_Gateway 
+#       shell: sudo systemctl start sync_gateway
+#       ignore_errors: yes
+#       tags: 
+#          - start
+     - name: Sync_Gateway action
+       shell: sudo systemctl {{action}} sync_gateway
+       tags:
+           - action

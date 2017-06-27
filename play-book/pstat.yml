@@ -1,0 +1,13 @@
+---
+  - name: couchbase
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+    become: yes
+    become_method: su
+    become_user: couchbase
+    
+    tasks:
+     - name: Couchbase {{action}}
+       command: sudo /usr/bin/systemctl {{action}} couchbase-server
+       register: server
+     - debug: msg="{{server.stdout}}"

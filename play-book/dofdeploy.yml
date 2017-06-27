@@ -1,0 +1,43 @@
+---
+ - hosts: webnode 
+   remote_user: cbops
+   tasks:
+#     - name: Finding Deliverable path
+#       local_action: stat path=/msservice/app/node-proxy-local/app.js
+#       register: files
+#     - name: Check the ear file
+#       fail: msg="ear file doesn't exist"
+#       when: not files.stat.exists
+#     - name: Checking..................
+#       stat: path=/opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+#       register: id
+#     - name: Remove current running process
+#       shell: PID=`cat /opt/node-apps/dof/mainak_test/pid/node-proxy.pid` && kill -9 $PID ; rm -rf /opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+#       when: id.stat.exists
+#     - name: Validating the couchbase variable
+#       shell: source /home/cbops/scripts/checkvar.sh
+#     - name: Checking Deployment Folder....
+#       stat: path=/opt/node-apps/dof/mainak_test/node-proxy/
+#       register: dircheck
+#     - name: Output the couchbase env variable
+#       shell: echo $COUCHBASE_CONFIG_BUCKET
+#     - name: Preparing deployment folder
+#       shell: rm -rf /opt/node-apps/dof/mainak_test/node-proxy/*
+#       when: dircheck.stat.exists
+#     - name: ssh file to destination
+#       copy: src=/msservice/app/node-proxy-local/ dest=/opt/node-apps/dof/mainak_test/node-proxy/
+#       when: files.stat.exists
+#     - name: Checking Log status
+#       stat: path=/opt/node-apps/dof/mainak_test/logs/node-proxy.log
+#       register: log_stat
+#     - name: Enabling Log rotate
+#       shell: mv /opt/node-apps/dof/mainak_test/logs/node-proxy.log /opt/node-apps/dof/mainak_test/logs/node-proxy.$(date +%F-%H:%M).log
+#       when: log_stat.stat.exists
+#     - name: Deploying nodeJS file
+#       shell: nohup /opt/node-apps/node-v4.4.5-linux-x64/bin/node /opt/node-apps/dof/mainak_test/node-proxy/app.js & echo $! > /opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+#     - name: Clearing temporary files
+#       shell: rm -rf /tmp/ansible-tmp-*
+      - name: Run placeholder script
+        local_action: sh /home/msservice/ansible/roles/common/scripts/placeholder.sh {{env}} {{app}}
+      - name: Copy Json File
+        copy: src=/msservice/app/workspace/{{app}}/project/scripts/data/{{app}}-sync-gw-db.json dest=/tmp/

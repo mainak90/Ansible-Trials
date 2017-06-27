@@ -1,0 +1,17 @@
+  - name: testingcleanup
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Copy flush scripts to Couchbase
+       copy: src=/home/msservice/ansible/scripts/flushgreeter.sh dest=/tmp/
+     - name: Assign Permissions
+       shell: chmod 777 /tmp/flushgreeter.sh
+     - name: Flush Couchbase bucket
+       shell: sh /tmp/flushgreeter.sh
+     - name: Remove scripts
+       shell: rm /tmp/flushgreeter.sh
+     - name: Archive dummy cases
+       local_action: shell zip /tmp/cases.zip /home/msservice/ansible/scripts/1a4f03a4040e25cff81a4d7b1bcc4c23 
+     - name: Load json documents in Couchbase
+       local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/testdocload.yml --extra-vars="bucket=greeter app=cb env={{env}}"

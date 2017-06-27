@@ -1,0 +1,22 @@
+  - name: cbflush
+    hosts: '{{bucket}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Copy flush scripts to Couchbase
+       copy: src=/home/msservice/ansible/scripts/flushconfig.sh dest=/tmp/
+     - name: Assign Permissions
+       shell: chmod 777 /tmp/flushconfig.sh
+     - name: Flush Couchbase bucket
+       shell: sh /tmp/flushconfig.sh
+     - name: Remove scripts
+       shell: rm /tmp/flushconfig.sh
+     - name: Copy flush scripts to Couchbase
+       copy: src=/home/msservice/ansible/scripts/flushgreeter.sh dest=/tmp/
+     - name: Assign Permissions
+       shell: chmod 777 /tmp/flushgreeter.sh
+     - name: Flush Couchbase bucket
+       shell: sh /tmp/flushgreeter.sh
+     - name: Remove scripts
+       shell: rm /tmp/flushgreeter.sh
+

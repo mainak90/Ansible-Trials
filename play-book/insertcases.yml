@@ -1,0 +1,9 @@
+  - name: testingcleanup
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Archive dummy cases
+       local_action: shell zip /tmp/cases.zip /home/msservice/ansible/scripts/1a4f03a4040e25cff81a4d7b1bcc4c23 
+     - name: Load json documents in Couchbase
+       local_action: command /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/testdocload.yml --extra-vars="bucket=greeter app=cb env={{env}}"

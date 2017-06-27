@@ -1,0 +1,15 @@
+  - name: cbdocload
+    hosts: '{{bucket}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+     - name: Copy json zip to Couchbase
+       copy: src=/tmp/{{app}}.zip dest=/tmp/
+     - name: Assign permissions
+       shell: chmod 777 /tmp/{{app}}.zip
+     - name: Load json in Couchbase Bucket
+       command: /opt/couchbase/bin/cbdocloader -u Administrator -p admin01 -n 127.0.0.1:8091 -b {{bucket}} /tmp/{{app}}.zip
+     - name: Remove json from couchbase
+       shell: rm -rf /tmp/{{app}}.zip
+       
+

@@ -1,0 +1,34 @@
+
+     - name: Pull SalesChannel.csv
+       shell: curl -X GET http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/MO/SalesChannel_20161212.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/SalesChannel_20161212.`date +%I%M%S`.csv
+     - name: Push SalesChannel.csv
+       shell: cp /tmp/SalesChannel_20161212.`date +%I%M`* /app/node-apps/in/MO/
+     - pause:
+        seconds: 2
+     - name: Pull AuthorizationProfile.core-team.csv
+       shell: curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/AuthorisationProfile.core-team.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/AuthorisationProfile.core-team.`date +%I%M%S`.csv
+     - name: Push AuthorizationProfile.core-team.csv
+       shell: cp /tmp/AuthorisationProfile.core-team.`date +%I%M`* /app/node-apps/in/CSA/
+     - pause:
+        seconds: 2
+     - name: Pull AuthorisationProfile.id1id6.csv
+       shell: curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/AuthorisationProfile.id1id6.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/AuthorisationProfile.id1id6.`date +%I%M%S`.csv
+     - name: Push AuthorisationProfile.id1id6.csv
+       shell: cp /tmp/AuthorisationProfile.id1id6.`date +%I%M`* /app/node-apps/in/CSA/
+     - pause:
+        seconds: 2
+     - name: Pull SalesPerson.core-team.csv
+       shell: curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/SalesPerson.core-team.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/SalesPerson.core-team.`date +%I%M%S`.csv
+     - name: Push SalesPerson.core-team.csv
+       shell : cp /tmp/SalesPerson.core-team.`date +%I%M`* /app/node-apps/in/CSA/
+     - pause:
+        seconds: 2
+     - name: Pull SalesPerson.id1id6.csv
+       shell: curl -X GET  http://el2604.bc:8585/DOF-Official/continuous-delivery/raw/master/data/in/CSA/SalesPerson.id1id6.csv?private_token=U1j6Zs_nYWh8a6P9xmpx > /tmp/SalesPerson.id1id6.`date +%I%M%S`.csv
+     - name: Push SalesPerson.id1id6.csv
+       shell: cp /tmp/SalesPerson.id1id6.`date +%I%M`* /app/node-apps/in/CSA/
+     - pause:
+        seconds: 2
+     - name: Remove all temp files
+       shell: cd /tmp/ && rm -rf SalesPerson.id1id6.`date +%k%M`* SalesPerson.core-team.`date +%k%M`* AuthorisationProfile.id1id6.`date +%k%M`* AuthorisationProfile.core-team.`date +%k%M`* SalesChannel_20161212.`date +%I%M`*
+

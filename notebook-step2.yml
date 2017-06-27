@@ -1,0 +1,23 @@
+  - name: deploy by delivery type
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+      - name: Copy artefacts to workspace
+        local_action: shell cp /msservice/app/workspace/notebook/project/project-{{app}}/dist/* /msservice/app/workspace/{{app}}/project/dist/
+#      - name: Running deploy for delivery-type=node
+      - include_role:
+          name: common
+        when: type == "node"
+#        register: deploy
+      - debug: msg= "{{deploy.stdout}}"
+      - name:  Running deploy for delivery-type=copy
+        local_action: shell /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/scp.yml --extra-vars "app={{app}} env={{env}}"
+        when: type == "copy"
+      - name:  Running deploy for delivery-type=data
+        local_action: shell /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/uploadfiles.yml --extra-vars "app={{app}} env={{env}}" 
+        when: type == "data"
+      - name: Running deploy for delivery-type=servvirt
+        local_action: shell /home/msservice/ansible/bin/ansible-playbook /home/msservice/ansible/play-book/servvirt.yml --extra-vars "app={{app}} env={{env}}"
+        when: type == "servvirt"               
+

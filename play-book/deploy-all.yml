@@ -1,0 +1,59 @@
+  - name: deploy by delivery type
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+
+    tasks:
+      - name: Stat workspace path
+        local_action: stat path=/msservice/app/workspace/{{app}}/project/
+        when: type == "node-app"
+      - name: Create workspace as it does not exist
+        local_action: shell mkdir /msservice/app/workspace/{{app}}/project/
+        when: type == "node-app"
+        ignore_errors: yes
+      - name: Move all project artefacts 
+        local_action: shell cp -r /msservice/app/workspace/build-all/project/project-{{app}}/* /msservice/app/workspace/{{app}}/project/
+        when: type == "node-app"
+      - name: Delete artefacts from temporary workspace
+        local_action: shell cd /msservice/app/workspace/{{app}}/project/dist/ && rm *.tar.gz
+        ignore_errors: yes
+        when: type == "node-app"
+      - name: Add artefacts
+        local_action: shell cd /msservice/app/workspace/{{app}}/project/dist/ && wget --auth-no-challenge --http-user=admin --http-password=admin {{deployable}}
+        when: type == "node-app"
+      - include: node.yml app={{app}} env={{env}}
+        when: type == "node-app"
+      - name: Remove artefacts to temporary  workspace
+        local_action: shell cd /msservice/app/workspace/{{app}}/project/dist/ && rm {{app}}.tar.gz
+        ignore_errors: yes
+        when: type == "frontend-app"
+      - name: Add artefacts
+        local_action: shell cd /msservice/app/workspace/{{app}}/project/dist/ && wget --auth-no-challenge --http-user=admin --http-password=admin {{deployable}}
+        when: type == "frontend-app"
+      - include: copy.yml app={{app}} env={{env}}
+        when: type == "frontend-app"
+      - name: Download tarball
+        local_action: shell cd /tmp/ && wget --auth-no-challenge --http-user=admin --http-password=admin {{deployable}}
+        when: type == "injecting-data"
+      - name: Create directory
+        local_action: shell mkdir /tmp/{{app}}
+        when: type == "injecting-data"
+        ignore_errors: yes
+      - name: Extract tarball
+        local_action: shell tar xvf /tmp/{{app}}-V1.0.0.tar.gz -C /tmp/{{app}}
+        when: type == "injecting-data"
+      - name: Adapting filenames for CSA
+        local_action: shell sh /home/msservice/ansible/scripts/managecustodyfiles.sh /tmp/{{app}}/data/in/CSA/
+        when: type == "injecting-data"
+      - name: Adapting filenames for MO
+        local_action: shell sh /home/msservice/ansible/scripts/managecustodyfiles.sh /tmp/{{app}}/data/in/MO/
+        when: type == "injecting-data"
+      - include: step2upload.yml app={{app}} env={{env}}
+        when: type == "injecting-data"
+      - name: Delete data
+        local_action: shell rm -rf /tmp/greeter-sv* 
+        when: type == "injecting-data"
+      - name: Copy artefacts to temporary  workspace
+        local_action: shell cd /msservice/app/workspace/build-all/project/project-{{app}}/dist && wget --auth-no-challenge --http-user=admin --http-password=admin {{deployable}}
+      - include: notebookservvirt.yml app={{app}} env={{env}}
+        when: type == "service-virtualization"
+

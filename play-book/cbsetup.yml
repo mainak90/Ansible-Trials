@@ -1,0 +1,43 @@
+---
+  - name: cbsetup
+    hosts: '{{app}}-{{env}}'
+    remote_user: dofuser
+   
+    tasks:
+     - name:  Checking setup scripts
+       local_action: stat path=/home/msservice/ansible/scripts/cbsetup.sh
+       register: files
+     - name: Check the delivery files
+       fail: msg="scripts doesn't exist"
+       when: not files.stat.exists
+#     - name: Checking..................
+#       stat: path=/opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+#       register: id
+#     - name: Remove current running process
+#       shell: PID=`cat /opt/node-apps/dof/mainak_test/pid/node-proxy.pid` && kill -9 $PID ; rm -rf /opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+#       when: id.stat.exists
+#     - name: Validating the couchbase variable
+#       shell: source /home/cbops/scripts/checkvar.sh
+#     - name: Output the couchbase env variable
+#       shell: echo $COUCHBASE_CONFIG_BUCKET 
+     - name: ssh setup script-1 to destination
+       copy: src=/home/msservice/ansible/scripts/cbsetup.sh dest=/home/dofuser/
+     - name: ssh setup script-1 to destination
+       copy: src=/home/msservice/ansible/scripts/cbcluster-{{env}}.sh dest=/home/dofuser/
+#     - name: Checking Log status
+#       stat: path=/opt/node-apps/dof/mainak_test/logs/node-proxy.log
+#       register: log_stat
+#     - name: Enabling Log rotate
+#       shell: mv /opt/node-apps/dof/mainak_test/logs/node-proxy.log /opt/node-apps/dof/mainak_test/logs/node-proxy.$(date +%F-%H:%M).log
+#       when: log_stat.stat.exists
+#     - name: Deploying nodeJS file
+#       shell: nohup /opt/node-apps/node-v4.4.5-linux-x64/bin/node /opt/node-apps/dof/mainak_test/node-proxy/app.js & echo $! > /opt/node-apps/dof/mainak_test/pid/node-proxy.pid
+     - name: Assign permissions 
+       shell: chmod 777 /home/dofuser/cbsetup.sh && chmod 777 /home/dofuser/cbcluster-{{env}}.sh
+##     - name: Setup Server
+##       shell: sh /home/dofuser/cbsetup.sh
+##     - name: Setup Cluster
+##       shell: sh /home/dofuser/cbcluster-{{env}}.sh
+##     - name: Clearing temporary local files
+##       shell: rm -rf /home/dofuser/cbsetup.sh && rm -rf /home/dofuser/cbcluster-{{env}}.sh
+     - debug: msg="All done!!! Thank you :)"

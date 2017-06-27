@@ -1,0 +1,6 @@
+---
+
+     - name: start app
+       shell: forever start  {{remote_path}}/{{app}}/app.js
+     - name: get process id
+       shell: ps -ef|grep node|head -n 2|awk {'print$2'} > {{remote_path}}/{{app}}/{{app}}.pid
